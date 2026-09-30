@@ -1,0 +1,24 @@
+{
+  "name": "repro-vite1-manifest-cache",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "build": "vite build",
+    "start": "NODE_ENV=production vinext start",
+    "bench": "node scripts/bench.mjs",
+    "patch": "node scripts/patch.mjs apply",
+    "unpatch": "node scripts/patch.mjs revert",
+    "compare": "node scripts/compare.mjs"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "vinext": "1.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.1.1",
+    "autocannon": "8.0.0",
+    "vite": "8.3.0"
+  }
+}

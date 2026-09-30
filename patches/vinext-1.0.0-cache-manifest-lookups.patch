@@ -1,0 +1,106 @@
+--- a/dist/server/pages-asset-tags.js
++++ b/dist/server/pages-asset-tags.js
+@@ -17,8 +17,13 @@
+ * Resolve the effective SSR manifest: prefer the caller-supplied object and
+ * fall back to the registered client build metadata.
+ */
++const nonEmptyManifests = /* @__PURE__ */ new WeakSet();
+ function resolveSsrManifest(manifest) {
+-	if (manifest && Object.keys(manifest).length > 0) return manifest;
++	if (manifest && nonEmptyManifests.has(manifest)) return manifest;
++	if (manifest && Object.keys(manifest).length > 0) {
++		nonEmptyManifests.add(manifest);
++		return manifest;
++	}
+ 	return getPagesClientAssets().ssrManifest ?? null;
+ }
+ /**
+@@ -27,13 +32,50 @@
+ * The manifest keys may use relative paths while callers supply absolute
+ * paths, so a suffix-match fallback is used when an exact-key lookup fails.
+ */
++const suffixKeyCache = /* @__PURE__ */ new WeakMap();
++function findKeyBySuffix(record, moduleId) {
++	let keys = suffixKeyCache.get(record);
++	if (!keys) suffixKeyCache.set(record, keys = /* @__PURE__ */ new Map());
++	if (keys.has(moduleId)) return keys.get(moduleId);
++	let found;
++	for (const key in record) if (moduleId === key || moduleId.endsWith("/" + key)) {
++		found = key;
++		break;
++	}
++	keys.set(moduleId, found);
++	return found;
++}
+ function getManifestFilesForModule(manifest, moduleId) {
+ 	if (!manifest || !moduleId) return null;
+ 	const files = manifest[moduleId];
+ 	if (files) return files;
+-	for (const key in manifest) if (moduleId.endsWith("/" + key) || moduleId === key) return manifest[key];
+-	return null;
++	const key = findKeyBySuffix(manifest, moduleId);
++	return key === void 0 ? null : manifest[key];
+ }
++const lazyChunkSetCache = /* @__PURE__ */ new WeakMap();
++function getLazyChunkSet(lazyChunks) {
++	let set = lazyChunkSetCache.get(lazyChunks);
++	if (!set) lazyChunkSetCache.set(lazyChunks, set = new Set(lazyChunks));
++	return set;
++}
++const sharedChunkCache = /* @__PURE__ */ new WeakMap();
++function getSharedChunkFiles(manifest) {
++	let shared = sharedChunkCache.get(manifest);
++	if (shared) return shared;
++	const unique = /* @__PURE__ */ new Set();
++	for (const key in manifest) {
++		const vals = manifest[key];
++		if (!vals) continue;
++		for (let vi = 0; vi < vals.length; vi++) {
++			const file = vals[vi];
++			const basename = file.split("/").pop() || "";
++			if (basename.startsWith("framework-") || basename.startsWith("vinext-") || basename.includes("vinext-client-entry") || basename.includes("vinext-app-browser-entry")) unique.add(file);
++		}
++	}
++	shared = [...unique];
++	sharedChunkCache.set(manifest, shared);
++	return shared;
++}
+ function collectGraphOrderedCss(graph, moduleIds) {
+ 	const ordered = [];
+ 	const emitted = /* @__PURE__ */ new Set();
+@@ -41,7 +83,7 @@
+ 	function findKey(moduleId) {
+ 		if (!moduleId) return void 0;
+ 		if (graph[moduleId]) return moduleId;
+-		for (const key in graph) if (moduleId === key || moduleId.endsWith("/" + key)) return key;
++		return findKeyBySuffix(graph, moduleId);
+ 	}
+ 	function visit(key) {
+ 		if (!key || visited.has(key)) return;
+@@ -104,7 +146,7 @@
+ 	};
+ 	const runtimeAssets = getPagesClientAssets();
+ 	const lazyChunks = runtimeAssets.lazyChunks ?? null;
+-	const lazySet = lazyChunks && lazyChunks.length > 0 ? new Set(lazyChunks) : null;
++	const lazySet = lazyChunks && lazyChunks.length > 0 ? getLazyChunkSet(lazyChunks) : null;
+ 	const clientEntry = runtimeAssets.clientEntry;
+ 	if (clientEntry) {
+ 		seen.add(clientEntry);
+@@ -128,15 +170,8 @@
+ 				const files = getManifestFilesForModule(m, id);
+ 				if (files) for (let fi = 0; fi < files.length; fi++) allFiles.push(files[fi]);
+ 			}
+-			for (const key in m) {
+-				const vals = m[key];
+-				if (!vals) continue;
+-				for (let vi = 0; vi < vals.length; vi++) {
+-					const file = vals[vi];
+-					const basename = file.split("/").pop() || "";
+-					if (basename.startsWith("framework-") || basename.startsWith("vinext-") || basename.includes("vinext-client-entry") || basename.includes("vinext-app-browser-entry")) allFiles.push(file);
+-				}
+-			}
++			const shared = getSharedChunkFiles(m);
++			for (let si = 0; si < shared.length; si++) allFiles.push(shared[si]);
+ 		} else for (const akey in m) {
+ 			const avals = m[akey];
+ 			if (avals) for (let ai = 0; ai < avals.length; ai++) allFiles.push(avals[ai]);
