@@ -1,5 +1,7 @@
 # vinext Pages Router: every SSR request scans the whole SSR manifest
 
+Reported in [cloudflare/vinext#3585](https://github.com/cloudflare/vinext/issues/3585).
+
 **vinext 1.0.0 walks the full SSR manifest on every Pages Router request, so the cost per request grows with app size.**
 A 3000-page app serves 25 req/s; with the [patch](patches/vinext-1.0.0-cache-manifest-lookups.patch), which caches the lookups per manifest, it serves 4545 req/s with byte-identical HTML.
 
