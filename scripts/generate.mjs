@@ -1,5 +1,5 @@
 // Generates a synthetic Pages Router app: `pages` routes, each importing
-// `perPage` of `components` shared components (each with a CSS module).
+// `perPage` of `components` shared components (each with a CSS module)
 // Usage: node scripts/generate.mjs [pages=20] [components=100] [perPage=10]
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 

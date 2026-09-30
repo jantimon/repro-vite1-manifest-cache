@@ -1,5 +1,5 @@
 // Applies or reverts patches/*.patch on node_modules/vinext. Rebuild afterwards:
-// vinext's server code is bundled into dist/server at build time.
+// vinext's server code is bundled into dist/server at build time
 // Usage: node scripts/patch.mjs apply|revert
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";

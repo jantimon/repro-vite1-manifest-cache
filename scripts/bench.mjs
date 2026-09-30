@@ -1,4 +1,4 @@
-// Load-tests a running `vinext start` server and prints requests/s.
+// Load-tests a running `vinext start` server and prints requests/s
 // Usage: node scripts/bench.mjs [url=http://localhost:3000/] [seconds=10]
 import autocannon from "autocannon";
 

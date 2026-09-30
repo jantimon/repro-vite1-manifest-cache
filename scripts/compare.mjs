@@ -1,7 +1,7 @@
 // For each app size: generate, build and bench `/` without and with the patch,
-// and check that both builds serve identical HTML.
+// and check that both builds serve identical HTML
 // Usage: node scripts/compare.mjs [--seconds=10] [--profile] [pages:components ...]
-// Defaults to three app sizes: 20:100, 1000:4000 and 3000:12000.
+// Defaults to three app sizes: 20:100, 1000:4000 and 3000:12000
 import { execFileSync, spawn } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
 import { bench } from "./bench.mjs";
